@@ -1,0 +1,477 @@
+//@version=5
+
+
+// https://twitter.com/ANoNyMouSs_o_0
+//
+indicator(shorttitle="SCANNER", title="SCANNER", overlay=true)
+
+
+////////////Kendi Kodun //////////////
+
+coeff = input.float(1, 'Multiplier', step=0.1)
+
+
+
+
+
+buy_signal = 
+
+
+
+sell_signal = 
+
+long_sarti=buy_signal
+short_sarti=sell_signal
+
+////////////Kendi Kodun //////////////
+
+
+VolKont=long_sarti  
+nu_volume1 = short_sarti
+
+plotshape(VolKont, style=shape.triangleup,  color=color.lime, location=location.belowbar, size=size.small)
+plotshape(nu_volume1, style=shape.triangledown, color=color.rgb(243, 3, 3), location=location.top, size=size.small)
+
+
+longAlarmiKurulsunMu=input.bool(true, title=" tek alarm kurmada Long alarmı da kurulsun mu?")
+
+shortAlarmiKurulsunMu=input.bool(false, title=" tek alarm kurmada Short alarmı da kurulsun mu?")
+
+shortkapatAlarmiKurulsunMu=input.bool(false, title=" tek alarm kurmada Short kapat alarmı da kurulsun mu?")
+
+longkapatAlarmiKurulsunMu=input.bool(false, title=" tek alarm kurmada Long kapat alarmı da kurulsun mu?")
+
+//////BOLLİNGER//////
+length = input.int(20, minval=1, group = 'BB_TF_GRAFİK')
+src = input(close, title='Source', group = 'BB_TF_GRAFİK')
+//BB_Std_Sapma = (ATRO*0.005)+2// (title='Std-SAPMA-ATR', group = 'BB_TF_GRAFİK')
+mult = input.float(2, step=0.1, minval=0.001, maxval=50, title='StdDev', group = 'BB_TF_GRAFİK')
+
+basis = ta.sma(src, length)
+dev = mult * ta.stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+//offset = input.int(0, 'Offset', minval=-500, maxval=500)
+plot(basis, 'Basis', color=color.new(#872323, 0), offset=0)
+p1 = plot(upper, 'Upper', color=color.new(color.teal, 0), offset=0)
+p2 = plot(lower, 'Lower', color=color.new(color.teal, 0), offset=0)
+fill(p1, p2, title='Background', color=color.new(#198787, 95))
+
+PUkosulu = VolKont and longAlarmiKurulsunMu
+plotshape(PUkosulu, style=shape.diamond, text='', title='AL', color=color.new(#52f1f7, 0), location=location.belowbar, size=size.tiny)
+
+NUkosulu = nu_volume1 and shortAlarmiKurulsunMu
+plotshape(NUkosulu, style=shape.diamond, text='', title='SAT', color=color.new(#f5f855, 1), location=location.abovebar, size=size.tiny)
+
+PUkosulu_sat = high > basis //upper
+pu1 = ta.barssince(PUkosulu)
+pu2 = ta.barssince(PUkosulu_sat)
+pu3 = PUkosulu_sat and pu2[1] > pu1[1] and longkapatAlarmiKurulsunMu
+plotshape(pu3, style=shape.diamond, text='PU\'lu OS \nLONG-KAPAT', title='PU\'lu OS', color=color.new(color.maroon, 0), location=location.abovebar, size=size.tiny)
+
+NUkosulu_sat = low < basis // upper
+nu1 = ta.barssince(NUkosulu)
+nu2 = ta.barssince(NUkosulu_sat)
+nu3 = NUkosulu_sat and nu2[1] > nu1[1] and shortkapatAlarmiKurulsunMu
+plotshape(nu3, style=shape.diamond, text='NU\'lu OS \nSHORT-KAPAT', title='NU\'lu OS', color=color.new(#f4a053, 9), location=location.belowbar, size=size.tiny)
+
+aldigimfiyatlong = str.tostring(ta.valuewhen(PUkosulu, close, 0))
+sattigimfiyatlong = str.tostring(ta.valuewhen(pu3, close, 0))
+
+Buylong = PUkosulu
+Selllong = pu3
+if Buylong == 1
+    l = label.new(bar_index, na)
+    label.set_text(l, aldigimfiyatlong)
+    label.set_color(l, #90c5f0)
+    label.set_yloc(l, yloc.belowbar)
+    label.set_style(l, label.style_label_upper_right)
+if Selllong == 1
+    l = label.new(bar_index, na)
+    label.set_text(l, sattigimfiyatlong)
+    label.set_color(l, #c990f0)
+    label.set_yloc(l, yloc.abovebar)
+    label.set_style(l, label.style_label_lower_right)
+
+aldigimfiyatshort = str.tostring(ta.valuewhen(NUkosulu, close, 0))
+sattigimfiyatshort = str.tostring(ta.valuewhen(nu3, close, 0))
+
+Buyshort = NUkosulu
+Sellshort = nu3
+if Buyshort == 1
+    l = label.new(bar_index, na)
+    label.set_text(l, aldigimfiyatshort)
+    label.set_color(l, color.orange)
+    label.set_yloc(l, yloc.abovebar)
+    label.set_style(l, label.style_label_lower_left)
+if Sellshort == 1
+    l = label.new(bar_index, na)
+    label.set_text(l, sattigimfiyatshort)
+    label.set_color(l, color.orange)
+    label.set_yloc(l, yloc.belowbar)
+    label.set_style(l, label.style_label_upper_left)
+
+
+    //Etiket Inputs
+gorunum_onay = input.bool(true, title='Etiket Göster', group='TARAYICI')
+yatay_konum_long = input.int(15, title='Etiket Konumu Yatay Eksen LONG', group='TARAYICI')
+dikey_konum = input.int(1, title='Etiket Konumu Dikey Eksen', group='TARAYICI')
+renk = input.color(#4cc7fe, title='Etiket Rengi', group='TARAYICI')
+
+sure =  input.timeframe(defval="", title = "COIN TARAMA ZAMANI SEC")
+
+
+bir = input(true, title='1.GRUP',group='TARAYICI')
+iki = input(false, title='2.GRUP',group='TARAYICI')
+uc = input(false, title='3.GRUP',group='TARAYICI')
+dort = input(false, title='4.GRUP',group='TARAYICI')
+bes = input(false, title='5.GRUP',group='TARAYICI')
+alti = input(false, title='6.GRUP',group='TARAYICI')
+yedi = input(false, title='7.GRUP',group='TARAYICI')
+sekiz = input(false, title='8.GRUP',group='TARAYICI')
+
+z1 = input.symbol(title='Sembol-1', defval="",group="TARAYICI", inline = "1")
+z2 = input.symbol(title='Sembol-2', defval="BINANCE:1000LUNCUSDTPERP",group="TARAYICI", inline = "2")
+z3 = input.symbol(title='Sembol-3', defval="BINANCE:1000SHIBUSDTPERP",group="TARAYICI", inline = "3")
+z4 = input.symbol(title='Sembol-4', defval="BINANCE:1000XECUSDTPERP",group="TARAYICI", inline = "4")
+z5 = input.symbol(title='Sembol-5', defval="BINANCE:1INCHUSDTPERP",group="TARAYICI", inline = "5")
+z6 = input.symbol(title='Sembol-6', defval="BINANCE:AAVEUSDTPERP",group="TARAYICI", inline = "6")
+z7 = input.symbol(title='Sembol-7', defval="BINANCE:ACHUSDTPERP",group="TARAYICI", inline = "7")
+z8 = input.symbol(title='Sembol-8', defval="BINANCE:ADAUSDTPERP",group="TARAYICI", inline = "8")
+z9 = input.symbol(title='Sembol-9', defval="BINANCE:AGIXUSDTPERP",group="TARAYICI", inline = "9")
+z10 = input.symbol(title='Sembol-10', defval="BINANCE:ALGOUSDTPERP",group="TARAYICI", inline = "10")
+z11 = input.symbol(title='Sembol-11', defval="BINANCE:ALICEUSDTPERP",group="TARAYICI", inline = "11")
+z12 = input.symbol(title='Sembol-12', defval="BINANCE:ALPHAUSDTPERP",group="TARAYICI", inline = "12")
+z13 = input.symbol(title='Sembol-13', defval="BINANCE:AMBUSDTPERP",group="TARAYICI", inline = "13")
+z14 = input.symbol(title='Sembol-14', defval="BINANCE:ANKRUSDTPERP",group="TARAYICI", inline = "14")
+z15 = input.symbol(title='Sembol-15', defval="BINANCE:ANTUSDTPERP",group="TARAYICI", inline = "15")
+z16 = input.symbol(title='Sembol-16', defval="BINANCE:APEUSDTPERP",group="TARAYICI", inline = "16")
+z17 = input.symbol(title='Sembol-17', defval="BINANCE:API3USDTPERP",group="TARAYICI", inline = "17")
+z18 = input.symbol(title='Sembol-18', defval="BINANCE:APTUSDTPERP",group="TARAYICI", inline = "18")
+z19 = input.symbol(title='Sembol-19', defval="BINANCE:ARBUSDTPERP",group="TARAYICI", inline = "19")
+z20 = input.symbol(title='Sembol-20', defval="BINANCE:ARPAUSDTPERP",group="TARAYICI", inline = "20")
+z21 = input.symbol(title='Sembol-21', defval="BINANCE:ARUSDTPERP",group="TARAYICI", inline = "21")
+z22 = input.symbol(title='Sembol-22', defval="BINANCE:ASTRUSDTPERP",group="TARAYICI", inline = "22")
+z23 = input.symbol(title='Sembol-23', defval="BINANCE:ATAUSDTPERP",group="TARAYICI", inline = "23")
+z24 = input.symbol(title='Sembol-24', defval="BINANCE:ATOMUSDTPERP",group="TARAYICI", inline = "24")
+z25 = input.symbol(title='Sembol-25', defval="BINANCE:AUDIOUSDTPERP",group="TARAYICI", inline = "25")
+z26 = input.symbol(title='Sembol-26', defval="BINANCE:AVAXUSDTPERP",group="TARAYICI", inline = "26")
+z27 = input.symbol(title='Sembol-27', defval="BINANCE:AXSUSDTPERP",group="TARAYICI", inline = "27")
+z28 = input.symbol(title='Sembol-28', defval="BINANCE:ZECUSDTPERP",group="TARAYICI", inline = "28")
+z29 = input.symbol(title='Sembol-29', defval="BINANCE:BAKEUSDTPERP",group="TARAYICI", inline = "29")
+z30 = input.symbol(title='Sembol-30', defval="BINANCE:BALUSDTPERP",group="TARAYICI", inline = "30")
+z31 = input.symbol(title='Sembol-31', defval="BINANCE:BANDUSDTPERP",group="TARAYICI", inline = "31")
+z32 = input.symbol(title='Sembol-32', defval="BINANCE:XEMUSDTPERP",group="TARAYICI", inline = "32")
+z33 = input.symbol(title='Sembol-33', defval="BINANCE:ZENUSDTPERP",group="TARAYICI", inline = "33")
+z34 = input.symbol(title='Sembol-34', defval="BINANCE:BATUSDTPERP",group="TARAYICI", inline = "34")
+z35 = input.symbol(title='Sembol-35', defval="BINANCE:BCHUSDTPERP",group="TARAYICI", inline = "35")
+
+b1 = input.symbol(title='Sembol-36', defval="",group="TARAYICI", inline = "36")
+b2 = input.symbol(title='Sembol-37', defval="BINANCE:BLUEBIRDUSDTPERP",group="TARAYICI", inline = "37")
+b3 = input.symbol(title='Sembol-38', defval="BINANCE:BLZUSDTPERP",group="TARAYICI", inline = "38")
+b4 = input.symbol(title='Sembol-39', defval="BINANCE:BNBUSDTPERP",group="TARAYICI", inline = "39")
+b5 = input.symbol(title='Sembol-40', defval="BINANCE:BNXUSDTPERP",group="TARAYICI", inline = "40")
+b6 = input.symbol(title='Sembol-41', defval="BINANCE:BTCDOMUSDTPERP",group="TARAYICI", inline = "41")
+b7 = input.symbol(title='Sembol-42', defval="BINANCE:BTCUSDTPERP",group="TARAYICI", inline = "42")
+b8 = input.symbol(title='Sembol-43', defval="BINANCE:C98USDTPERP",group="TARAYICI", inline = "43")
+b9 = input.symbol(title='Sembol-44', defval="BINANCE:BELUSDTPERP",group="TARAYICI", inline = "44")
+b10 = input.symbol(title='Sembol-45', defval="BINANCE:YFIUSDTPERP",group="TARAYICI", inline = "45")
+b11 = input.symbol(title='Sembol-46', defval="BINANCE:CELOUSDTPERP",group="TARAYICI", inline = "46")
+b12 = input.symbol(title='Sembol-47', defval="BINANCE:CELRUSDTPERP",group="TARAYICI", inline = "47")
+b13 = input.symbol(title='Sembol-48', defval="BINANCE:CFXUSDTPERP",group="TARAYICI", inline = "48")
+b14 = input.symbol(title='Sembol-49', defval="BINANCE:CHRUSDTPERP",group="TARAYICI", inline = "49")
+b15 = input.symbol(title='Sembol-50', defval="BINANCE:CHZUSDTPERP",group="TARAYICI", inline = "50")
+b16 = input.symbol(title='Sembol-51', defval="BINANCE:CKBUSDTPERP",group="TARAYICI", inline = "51")
+b17 = input.symbol(title='Sembol-52', defval="BINANCE:COCOSUSDTPERP",group="TARAYICI", inline = "52")
+b18 = input.symbol(title='Sembol-53', defval="BINANCE:XLMUSDTPERP",group="TARAYICI", inline = "53")
+b19 = input.symbol(title='Sembol-54', defval="BINANCE:COMPUSDTPERP",group="TARAYICI", inline = "54")
+b20 = input.symbol(title='Sembol-55', defval="BINANCE:COTIUSDTPERP",group="TARAYICI", inline = "55")
+b21 = input.symbol(title='Sembol-56', defval="BINANCE:CRVUSDTPERP",group="TARAYICI", inline = "56")
+b22 = input.symbol(title='Sembol-57', defval="BINANCE:CTKUSDTPERP",group="TARAYICI", inline = "57")
+b23 = input.symbol(title='Sembol-58', defval="BINANCE:CTSIUSDTPERP",group="TARAYICI", inline = "58")
+b24 = input.symbol(title='Sembol-59', defval="BINANCE:CVXUSDTPERP",group="TARAYICI", inline = "59")
+b25 = input.symbol(title='Sembol-60', defval="BINANCE:DARUSDTPERP",group="TARAYICI", inline = "60")
+b26 = input.symbol(title='Sembol-61', defval="BINANCE:DASHUSDTPERP",group="TARAYICI", inline = "61")
+b27 = input.symbol(title='Sembol-62', defval="BINANCE:DEFIUSDTPERP",group="TARAYICI", inline = "62")
+b28 = input.symbol(title='Sembol-63', defval="BINANCE:DENTUSDTPERP",group="TARAYICI", inline = "63")
+b29 = input.symbol(title='Sembol-64', defval="BINANCE:DGBUSDTPERP",group="TARAYICI", inline = "64")
+b30 = input.symbol(title='Sembol-65', defval="BINANCE:DOGEUSDTPERP",group="TARAYICI", inline = "65")
+b31 = input.symbol(title='Sembol-66', defval="BINANCE:UNIUSDTPERP",group="TARAYICI", inline = "66")
+b32 = input.symbol(title='Sembol-67', defval="BINANCE:DOTUSDTPERP",group="TARAYICI", inline = "67")
+b33 = input.symbol(title='Sembol-68', defval="BINANCE:WAVESUSDTPERP",group="TARAYICI", inline = "68")
+b34 = input.symbol(title='Sembol-69', defval="BINANCE:DUSKUSDTPERP",group="TARAYICI", inline = "69")
+b35 = input.symbol(title='Sembol-70', defval="BINANCE:DYDXUSDTPERP",group="TARAYICI", inline = "70")
+
+c1 = input.symbol(title='Sembol-71', defval="",group="TARAYICI", inline = "71")
+c2 = input.symbol(title='Sembol-72', defval="BINANCE:ENJUSDTPERP",group="TARAYICI", inline = "72")
+c3 = input.symbol(title='Sembol-73', defval="BINANCE:ENSUSDTPERP",group="TARAYICI", inline = "73")
+c4 = input.symbol(title='Sembol-74', defval="BINANCE:EOSUSDTPERP",group="TARAYICI", inline = "74")
+c5 = input.symbol(title='Sembol-75', defval="BINANCE:ETCUSDTPERP",group="TARAYICI", inline = "75")
+c6 = input.symbol(title='Sembol-76', defval="BINANCE:ETHUSDTPERP",group="TARAYICI", inline = "76")
+c7 = input.symbol(title='Sembol-77', defval="BINANCE:FETUSDTPERP",group="TARAYICI", inline = "77")
+c8 = input.symbol(title='Sembol-78', defval="BINANCE:FILUSDTPERP",group="TARAYICI", inline = "78")
+c9 = input.symbol(title='Sembol-79', defval="BINANCE:FLMUSDTPERP",group="TARAYICI", inline = "79")
+c10 = input.symbol(title='Sembol-80', defval="BINANCE:FLOWUSDTPERP",group="TARAYICI", inline = "80")
+c11 = input.symbol(title='Sembol-81', defval="BINANCE:FOOTBALLUSDTPERP",group="TARAYICI", inline = "81")
+c12 = input.symbol(title='Sembol-82', defval="BINANCE:FTMUSDTPERP",group="TARAYICI", inline = "82")
+c13 = input.symbol(title='Sembol-83', defval="BINANCE:FXSUSDTPERP",group="TARAYICI", inline = "83")
+c14 = input.symbol(title='Sembol-84', defval="BINANCE:GALAUSDTPERP",group="TARAYICI", inline = "84")
+c15 = input.symbol(title='Sembol-85', defval="BINANCE:GALUSDTPERP",group="TARAYICI", inline = "85")
+c16 = input.symbol(title='Sembol-86', defval="BINANCE:GMTUSDTPERP",group="TARAYICI", inline = "86")
+c17 = input.symbol(title='Sembol-87', defval="BINANCE:EGLDUSDTPERP",group="TARAYICI", inline = "87")
+c18 = input.symbol(title='Sembol-88', defval="BINANCE:ZILUSDTPERP",group="TARAYICI", inline = "88")
+c19 = input.symbol(title='Sembol-89', defval="BINANCE:GMXUSDTPERP",group="TARAYICI", inline = "89")
+c20 = input.symbol(title='Sembol-90', defval="BINANCE:GRTUSDTPERP",group="TARAYICI", inline = "90")
+c21 = input.symbol(title='Sembol-91', defval="BINANCE:GTCUSDTPERP",group="TARAYICI", inline = "91")
+c22 = input.symbol(title='Sembol-92', defval="BINANCE:XTZUSDTPERP",group="TARAYICI", inline = "92")
+c23 = input.symbol(title='Sembol-93', defval="BINANCE:HBARUSDTPERP",group="TARAYICI", inline = "93")
+c24 = input.symbol(title='Sembol-94', defval="BINANCE:HIGHUSDTPERP",group="TARAYICI", inline = "94")
+c25 = input.symbol(title='Sembol-95', defval="BINANCE:HOOKUSDTPERP",group="TARAYICI", inline = "95")
+c26 = input.symbol(title='Sembol-96', defval="BINANCE:XRPUSDTPERP",group="TARAYICI", inline = "96")
+c27 = input.symbol(title='Sembol-97', defval="BINANCE:HOTUSDTPERP",group="TARAYICI", inline = "97")
+c28 = input.symbol(title='Sembol-98', defval="BINANCE:ICPUSDTPERP",group="TARAYICI", inline = "98")
+c29 = input.symbol(title='Sembol-99', defval="BINANCE:ICXUSDTPERP",group="TARAYICI", inline = "99")
+c30 = input.symbol(title='Sembol-100', defval="BINANCE:IDUSDTPERP",group="TARAYICI", inline = "100")
+c31 = input.symbol(title='Sembol-101', defval="BINANCE:IMXUSDTPERP",group="TARAYICI", inline = "101")
+c32 = input.symbol(title='Sembol-102', defval="BINANCE:INJUSDTPERP",group="TARAYICI", inline = "102")
+c33 = input.symbol(title='Sembol-103', defval="BINANCE:IOSTUSDTPERP",group="TARAYICI", inline = "103")
+c34 = input.symbol(title='Sembol-104', defval="BINANCE:IOTAUSDTPERP",group="TARAYICI", inline = "104")
+c35 = input.symbol(title='Sembol-105', defval="BINANCE:IOTXUSDTPERP",group="TARAYICI", inline = "105")
+
+d1 = input.symbol(title='Sembol-106', defval="",group="TARAYICI", inline = "106")
+d2 = input.symbol(title='Sembol-107', defval="BINANCE:JOEUSDTPERP",group="TARAYICI", inline = "107")
+d3 = input.symbol(title='Sembol-108', defval="BINANCE:KAVAUSDTPERP",group="TARAYICI", inline = "108")
+d4 = input.symbol(title='Sembol-109', defval="BINANCE:KLAYUSDTPERP",group="TARAYICI", inline = "109")
+d5 = input.symbol(title='Sembol-110', defval="BINANCE:KNCUSDTPERP",group="TARAYICI", inline = "110")
+d6 = input.symbol(title='Sembol-111', defval="BINANCE:KSMUSDTPERP",group="TARAYICI", inline = "111")
+d7 = input.symbol(title='Sembol-112', defval="BINANCE:LDOUSDTPERP",group="TARAYICI", inline = "112")
+d8 = input.symbol(title='Sembol-113', defval="BINANCE:LEVERUSDTPERP",group="TARAYICI", inline = "113")
+d9 = input.symbol(title='Sembol-114', defval="BINANCE:JASMYUSDTPERP",group="TARAYICI", inline = "114")
+d10 = input.symbol(title='Sembol-115', defval="BINANCE:LINAUSDTPERP",group="TARAYICI", inline = "115")
+d11 = input.symbol(title='Sembol-116', defval="BINANCE:LINKUSDTPERP",group="TARAYICI", inline = "116")
+d12 = input.symbol(title='Sembol-117', defval="BINANCE:LITUSDTPERP",group="TARAYICI", inline = "117")
+d13 = input.symbol(title='Sembol-118', defval="BINANCE:LPTUSDTPERP",group="TARAYICI", inline = "118")
+d14 = input.symbol(title='Sembol-119', defval="BINANCE:LQTYUSDTPERP",group="TARAYICI", inline = "119")
+d15 = input.symbol(title='Sembol-120', defval="BINANCE:LRCUSDTPERP",group="TARAYICI", inline = "120")
+d16 = input.symbol(title='Sembol-121', defval="BINANCE:LTCUSDTPERP",group="TARAYICI", inline = "121")
+d17 = input.symbol(title='Sembol-122', defval="BINANCE:LUNA2USDTPERP",group="TARAYICI", inline = "122")
+d18 = input.symbol(title='Sembol-123', defval="BINANCE:MAGICUSDTPERP",group="TARAYICI", inline = "123")
+d19 = input.symbol(title='Sembol-124', defval="BINANCE:MANAUSDTPERP",group="TARAYICI", inline = "124")
+d20 = input.symbol(title='Sembol-125', defval="BINANCE:MASKUSDTPERP",group="TARAYICI", inline = "125")
+d21 = input.symbol(title='Sembol-126', defval="BINANCE:MATICUSDTPERP",group="TARAYICI", inline = "126")
+d22 = input.symbol(title='Sembol-127', defval="BINANCE:MINAUSDTPERP",group="TARAYICI", inline = "127")
+d23 = input.symbol(title='Sembol-128', defval="BINANCE:XMRUSDTPERP",group="TARAYICI", inline = "128")
+d24 = input.symbol(title='Sembol-129', defval="BINANCE:MKRUSDTPERP",group="TARAYICI", inline = "129")
+d25 = input.symbol(title='Sembol-130', defval="BINANCE:UNFIUSDTPERP",group="TARAYICI", inline = "130")
+d26 = input.symbol(title='Sembol-131', defval="BINANCE:MTLUSDTPERP",group="TARAYICI", inline = "131")
+d27 = input.symbol(title='Sembol-132', defval="BINANCE:NEARUSDTPERP",group="TARAYICI", inline = "132")
+d28 = input.symbol(title='Sembol-133', defval="BINANCE:NEOUSDTPERP",group="TARAYICI", inline = "133")
+d29 = input.symbol(title='Sembol-134', defval="BINANCE:NKNUSDTPERP",group="TARAYICI", inline = "134")
+d30 = input.symbol(title='Sembol-135', defval="BINANCE:OCEANUSDTPERP",group="TARAYICI", inline = "135")
+d31 = input.symbol(title='Sembol-136', defval="BINANCE:OGNUSDTPERP",group="TARAYICI", inline = "136")
+d32 = input.symbol(title='Sembol-137', defval="BINANCE:OMGUSDTPERP",group="TARAYICI", inline = "137")
+d33 = input.symbol(title='Sembol-138', defval="BINANCE:ONEUSDTPERP",group="TARAYICI", inline = "138")
+d34 = input.symbol(title='Sembol-139', defval="BINANCE:ONTUSDTPERP",group="TARAYICI", inline = "139")
+d35 = input.symbol(title='Sembol-140', defval="BINANCE:OPUSDTPERP",group="TARAYICI", inline = "140")
+
+e1 = input.symbol(title='Sembol-141', defval="",group="TARAYICI", inline = "141")
+e2 = input.symbol(title='Sembol-142', defval="BINANCE:WOOUSDTPERP",group="TARAYICI", inline = "142")
+e3 = input.symbol(title='Sembol-143', defval="BINANCE:PEOPLEUSDTPERP",group="TARAYICI", inline = "143")
+e4 = input.symbol(title='Sembol-144', defval="BINANCE:ZRXUSDTPERP",group="TARAYICI", inline = "144")
+e5 = input.symbol(title='Sembol-145', defval="BINANCE:PHBUSDTPERP",group="TARAYICI", inline = "145")
+e6 = input.symbol(title='Sembol-146', defval="BINANCE:QNTUSDTPERP",group="TARAYICI", inline = "146")
+e7 = input.symbol(title='Sembol-147', defval="BINANCE:QTUMUSDTPERP",group="TARAYICI", inline = "147")
+e8 = input.symbol(title='Sembol-148', defval="BINANCE:REEFUSDTPERP",group="TARAYICI", inline = "148")
+e9 = input.symbol(title='Sembol-149', defval="BINANCE:RENUSDTPERP",group="TARAYICI", inline = "149")
+e10 = input.symbol(title='Sembol-150', defval="BINANCE:RLCUSDTPERP",group="TARAYICI", inline = "150")
+e11 = input.symbol(title='Sembol-151', defval="BINANCE:RNDRUSDTPERP",group="TARAYICI", inline = "151")
+e12 = input.symbol(title='Sembol-152', defval="BINANCE:ROSEUSDTPERP",group="TARAYICI", inline = "152")
+
+s1  = bir ? z1 : iki ? b1 : uc ? c1 : dort ? d1 : bes ? e1 : na
+s2  = bir ? z2 : iki ? b2 : uc ? c2 : dort ? d2 : bes ? e2 : na
+s3 = bir ? z3 : iki ? b3 : uc ? c3 : dort ? d3 : bes ? e3 : na
+s4 = bir ? z4 : iki ? b4 : uc ? c4 : dort ? d4 : bes ? e4 : na
+s5 = bir ? z5 : iki ? b5 : uc ? c5 : dort ? d5 : bes ? e5 : na
+s6 = bir ? z6 : iki ? b6 : uc ? c6 : dort ? d6 : bes ? e6 : na
+s7 = bir ? z7 : iki ? b7 : uc ? c7 : dort ? d7 : bes ? e7 : na
+s8 = bir ? z8 : iki ? b8 : uc ? c8 : dort ? d8 : bes ? e8 : na
+s9 = bir ? z9 : iki ? b9 : uc ? c9 : dort ? d9 : bes ? e9 : na
+s10 = bir ? z10 : iki ? b10 : uc ? c10 : dort ? d10 : bes ? e10 : na
+s11 = bir ? z11 : iki ? b11 : uc ? c11 : dort ? d11 : bes ? e11 : na
+s12 = bir ? z12 : iki ? b12 : uc ? c12 : dort ? d12 : bes ? e12 : na
+s13 = bir ? z13 : iki ? b13 : uc ? c13 : dort ? d13 : na
+s14 = bir ? z14 : iki ? b14 : uc ? c14 : dort ? d14 : na
+s15 = bir ? z15 : iki ? b15 : uc ? c15 : dort ? d15 : na
+s16 = bir ? z16 : iki ? b16 : uc ? c16 : dort ? d16 : na
+s17 = bir ? z17 : iki ? b17 : uc ? c17 : dort ? d17 : na
+s18 = bir ? z18 : iki ? b18 : uc ? c18 : dort ? d18 : na
+s19 = bir ? z19 : iki ? b19 : uc ? c19 : dort ? d19 : na
+s20 = bir ? z20 : iki ? b20 : uc ? c20 : dort ? d20 : na
+s21 = bir ? z21 : iki ? b21 : uc ? c21 : dort ? d21 : na
+s22 = bir ? z22 : iki ? b22 : uc ? c22 : dort ? d22 : na
+s23 = bir ? z23 : iki ? b23 : uc ? c23 : dort ? d23 : na
+s24 = bir ? z24 : iki ? b24 : uc ? c24 : dort ? d24 : na
+s25 = bir ? z25 : iki ? b25 : uc ? c25 : dort ? d25 : na
+s26 = bir ? z26 : iki ? b26 : uc ? c26 : dort ? d26 : na
+s27 = bir ? z27 : iki ? b27 : uc ? c27 : dort ? d27 : na
+s28 = bir ? z28 : iki ? b28 : uc ? c28 : dort ? d28 : na
+s29 = bir ? z29 : iki ? b29 : uc ? c29 : dort ? d29 : na
+s30 = bir ? z30 : iki ? b30 : uc ? c30 : dort ? d30 : na
+s31 = bir ? z31 : iki ? b31 : uc ? c31 : dort ? d31 : na
+s32 = bir ? z32 : iki ? b32 : uc ? c32 : dort ? d32 : na
+s33 = bir ? z33 : iki ? b33 : uc ? c33 : dort ? d33 : na
+s34 = bir ? z34 : iki ? b34 : uc ? c34 : dort ? d34 : na
+s35 = bir ? z35 : iki ? b35 : uc ? c35 : dort ? d35 : na
+
+
+
+longfunc() => 
+    long = PUkosulu
+    short = NUkosulu
+    longkapat = pu3
+    shortkapat = nu3
+    [long , short, longkapat, shortkapat]
+
+[x1, a1, y1, w1] = request.security(s1, sure, longfunc())
+[x2, a2, y2, w2] = request.security(s2, sure, longfunc())
+[x3, a3, y3, w3] = request.security(s3, sure, longfunc())
+[x4, a4, y4, w4] = request.security(s4, sure, longfunc())
+[x5, a5, y5, w5] = request.security(s5, sure, longfunc())
+[x6, a6, y6, w6] = request.security(s6, sure, longfunc())
+[x7, a7, y7, w7] = request.security(s7, sure, longfunc())
+[x8, a8, y8, w8] = request.security(s8, sure, longfunc())
+[x9, a9, y9, w9] = request.security(s9, sure, longfunc())
+[x10, a10, y10, w10] = request.security(s10, sure, longfunc())
+[x11, a11, y11, w11] = request.security(s11, sure, longfunc())
+[x12, a12, y12, w12] = request.security(s12, sure, longfunc())
+[x13, a13, y13, w13] = request.security(s13, sure, longfunc())
+[x14, a14, y14, w14] = request.security(s14, sure, longfunc())
+[x15, a15, y15, w15] = request.security(s15, sure, longfunc())
+[x16, a16, y16, w16] = request.security(s16, sure, longfunc())
+[x17, a17, y17, w17] = request.security(s17, sure, longfunc())
+[x18, a18, y18, w18] = request.security(s18, sure, longfunc())
+[x19, a19, y19, w19] = request.security(s19, sure, longfunc())
+[x20, a20, y20, w20] = request.security(s20, sure, longfunc())
+[x21, a21, y21, w21] = request.security(s21, sure, longfunc())
+[x22, a22, y22, w22] = request.security(s22, sure, longfunc())
+[x23, a23, y23, w23] = request.security(s23, sure, longfunc())
+[x24, a24, y24, w24] = request.security(s24, sure, longfunc())
+[x25, a25, y25, w25] = request.security(s25, sure, longfunc())
+[x26, a26, y26, w26] = request.security(s26, sure, longfunc())
+[x27, a27, y27, w27] = request.security(s27, sure, longfunc())
+[x28, a28, y28, w28] = request.security(s28, sure, longfunc())
+[x29, a29, y29, w29] = request.security(s29, sure, longfunc())
+[x30, a30, y30, w30] = request.security(s30, sure, longfunc())
+[x31, a31, y31, w31] = request.security(s31, sure, longfunc())
+[x32, a32, y32, w32] = request.security(s32, sure, longfunc())
+[x33, a33, y33, w33] = request.security(s33, sure, longfunc())
+[x34, a34, y34, w34] = request.security(s34, sure, longfunc())
+[x35, a35, y35, w35] = request.security(s35, sure, longfunc())
+//[x36, a36] = request.security(s36, sure, longfunc())
+//[x37, a37] = request.security(s37, sure, longfunc())
+//[x38, a38] = request.security(s38, sure, longfunc())
+// [x39, a39] = request.security(s39, sure, longfunc())
+// [x40, a40] = request.security(s40, sure, longfunc())
+
+long_label = '☠️ SCANNER ☠️ \n'
+
+// Compose a screener message
+long_label := a1 or x1 or y1 or w1 ? long_label + s1 + '\n' : long_label
+long_label := a2 or x2 or y2 or w2 ? long_label + s2+ '\n' : long_label
+long_label := a3 or x3 or y3 or w3 ? long_label + s3 + '\n' : long_label
+long_label := a4 or x4 or y4 or w4 ? long_label + s4 +'\n' : long_label
+long_label := a5 or x5 or y5 or w5 ? long_label + s5 +'\n' : long_label
+long_label := a6 or x6 or y6 or w6 ? long_label + s6 +'\n' : long_label
+long_label := a7 or x7 or y7 or w7 ? long_label + s7 + '\n' : long_label
+long_label := a8 or x8 or y8 or w8 ? long_label + s8 +'\n' : long_label
+long_label := a9 or x9 or y9 or w9 ? long_label + s9 +'\n' : long_label
+long_label := a10 or x10 or y10 or w10 ? long_label + s10 +'\n' : long_label
+long_label := a11 or x11 or y11 or w11 ? long_label + s11 +'\n' : long_label
+long_label := a12 or x12 or y12 or w12 ? long_label + s12 +'\n' : long_label
+long_label := a13 or x13 or y13 or w13 ? long_label + s13 +'\n' : long_label
+long_label := a14 or x14 or y14 or w14 ? long_label + s14 +'\n' : long_label
+long_label := a15 or x15 or y15 or w15 ? long_label + s15 +'\n' : long_label
+long_label := a16 or x16 or y16 or w16 ? long_label + s16 +'\n' : long_label
+long_label := a17 or x17 or y17 or w17 ? long_label + s17 +'\n' : long_label
+long_label := a18 or x18 or y18 or w18 ? long_label + s18 +'\n' : long_label
+long_label := a19 or x19 or y19 or w19 ? long_label + s19 +'\n' : long_label
+long_label := a20 or x20 or y20 or w20 ? long_label + s20 +'\n' : long_label
+long_label := a21 or x21 or y21 or w21 ? long_label + s21 +'\n' : long_label
+long_label := a22 or x22 or y22 or w22 ? long_label + s22 +'\n' : long_label
+long_label := a23 or x23 or y23 or w23 ? long_label + s23 +'\n' : long_label
+long_label := a24 or x24 or y24 or w24 ? long_label + s24 +'\n' : long_label
+long_label := a25 or x25 or y25 or w25 ? long_label + s25 +'\n' : long_label
+long_label := a26 or x26 or y26 or w26 ? long_label + s26 +'\n' : long_label
+long_label := a27 or x27 or y27 or w27 ? long_label + s27 +'\n' : long_label
+long_label := a28 or x28 or y28 or w28 ? long_label + s28 +'\n' : long_label
+long_label := a29 or x29 or y29 or w29 ? long_label + s29 +'\n' : long_label
+long_label := a30 or x30 or y30 or w30 ? long_label + s30 +'\n' : long_label
+long_label := a31 or x31 or y31 or w31 ? long_label + s31 +'\n' : long_label
+long_label := a32 or x32 or y32 or w32 ? long_label + s32 +'\n' : long_label
+long_label := a33 or x33 or y33 or w33 ? long_label + s33 +'\n' : long_label
+long_label := a34 or x34 or y34 or w34 ? long_label + s34 +'\n' : long_label
+long_label := a35 or x35 or y35 or w35 ? long_label + s35 +'\n' : long_label
+//long_label := a36 ? long_label + s36 + '\n' : long_label
+//long_label := a37 ? long_label + s37 + '\n' : long_label
+//long_label := a38 ? long_label + s38 + '\n' : long_label
+// long_label := a39 ? long_label + s39 + '\n' : long_label
+// long_label := a40 ? long_label + s40 + '\n' : long_label
+
+
+
+f_renk_seyi(_valscr) =>
+    _valscr ? #00000000 : na
+
+f_tarayicilong(aaa) =>
+    longfunc()
+    var etiketlong = label(na)
+    label.delete(etiketlong)
+    etiketlong := label.new(x=bar_index + yatay_konum_long, y=hl2 + hl2 * dikey_konum / 1000, text=aaa, xloc=xloc.bar_index, yloc=yloc.price, color=f_renk_seyi(gorunum_onay), style=label.style_label_center, textcolor=gorunum_onay ? renk : na, size=size.normal, textalign=text.align_left)
+    etiketlong
+f_tarayicilong(long_label + '\n')
+
+//f_tarayicishort(aa) =>
+    //shortfunc()
+    //var etiketshort = label(na)
+    //label.delete(etiketshort)
+    //etiketshort := label.new(x=bar_index + yatay_konum_short, y=hl2 + hl2 * dikey_konum / 1000, text=aa, xloc=xloc.bar_index, yloc=yloc.price, color=f_renk_seyi(gorunum_onay), style=label.style_label_center, textcolor=gorunum_onay ? renk : na, size=size.normal, textalign=text.align_left)
+    //etiketshort
+
+//f_tarayicishort(short_label + '\n')
+
+alarmshort = a1 or a2 or a3 or a4 or a5 or a6 or a7 or a8 or a9 or a10 or a11 or a12 or a13 or a14 or a15 or a16 or a17 or a18 or a19 or a20 or a21 or a22 or a23 or a24 or a25 or a26 or a27 or a28 or a29 or a30 or a31 or a32 or a33 or a34 or a35 //or a36 or a37
+alarmlong = x1 or x2 or x3 or x4 or x5 or x6 or x7 or x8 or x9 or x10 or x11 or x12 or x13 or x14 or x15 or x16 or x17 or x18 or x19 or x20 or x21 or x22 or x23 or x24 or x25 or x26 or x27 or x28 or x29 or x30 or x31 or x32 or x33 or x34 or x35 //or x36 or x37// or x38 or x39 or x40 
+alarmlongkapat = y1 or y2 or y3 or y4 or y5 or y6 or y7 or y8 or y9 or y10 or y11 or y12 or y13 or y14 or y15 or y16 or y17 or y18 or y19 or y20 or y21 or y22 or y23 or y24 or y25 or y26 or y27 or y28 or y29 or y30 or y31 or y32 or y33 or y34 or y35
+alarmshortkapat = w1 or w2 or w3 or w4 or w5 or w6 or w7 or w8 or w9 or w10 or w11 or w12 or w13 or w14 or w15 or w16 or w17 or w18 or w19 or w20 or w21 or w22 or w23 or w24 or w25 or w26 or w27 or w28 or w29 or w30 or w31 or w32 or w33 or w34 or w35
+for i= 0 to 35
+    var string time = timeframe.period
+    if alarmlong
+        alarmlong = 'Screener LONG GİRİŞ: \n'
+        alarmlong:= long_label,i 
+        
+        if (alarmlong != '')
+            MSJLONG = long_label[i]+ '\n' + '🟢 LONG  \n' + '1 DAKİKALIK ZAMAN DİLİMİNDEN GELEN SİNYALLERDİR'
+            alert(message = MSJLONG, freq = alert.freq_once_per_bar_close )
+    if alarmshort
+        alarmshort = 'Screener SHORT GİRİŞ : \n'
+        alarmshort:= long_label,i
+
+        if (alarmshort != '')
+            MSJSHORT = long_label[i]+ '\n' + '🔴 SHORT  \n' + '5 DAKİKALIK ZAMAN DİLİMİNDEN GELEN SİNYALLERDİR'
+            alert(message = MSJSHORT, freq = alert.freq_once_per_bar_close)
+
+    if alarmlongkapat
+        alarmlongkapat = 'Screener LONG KAPAT: \n'
+        alarmlongkapat:= long_label,i 
+        
+        if (alarmlongkapat != '')
+            MSJLONGKAPAT =  '{'+'"text"'+': '+'"' +long_label[i]+ ', PULU LONG KAPAT ' + '\\nMUM SÜRESİ:' +str.tostring(time)+ 'DK.' + ' - Tarih=' + str.tostring(month)+'/'+ str.tostring(dayofmonth)+'/'+str.tostring(year)+'"'+'}'
+            alert(message = MSJLONGKAPAT, freq = alert.freq_once_per_bar_close )
+    if alarmshortkapat
+        alarmshortkapat = 'Screener SHORT KAPAT : \n'
+        alarmshortkapat:= long_label,i
+
+        if (alarmshortkapat != '')
+            MSJSHORTKAPAT =  '{'+'"text"'+': '+'"' +long_label[i]+ ', NULU SHORT KAPAT' + ' \\nMUM SÜRESİ:' +str.tostring(time)+ 'DK.' + ' - Tarih=' + str.tostring(month)+'/'+ str.tostring(dayofmonth)+'/'+str.tostring(year)+'"'+'}'
+            alert(message = MSJSHORTKAPAT, freq = alert.freq_once_per_bar_close)
+       
